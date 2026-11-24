@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gebelik Haftası ve Tahmini Doğum Tarihi Hesaplayıcı</title>
+<meta name="description" content="Ebelik öğrencileri için ACOG Committee Opinion No. 700'e dayalı eğitim amaçlı gebelik haftası ve tahmini doğum tarihi hesaplayıcı.">
+<style>
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f1f4f7;
+  --text: #1c2430;
+  --muted: #5b6676;
+  --border: #d9dee5;
+  --accent: #1f5f8b;
+  --accent-soft: #e6f0f7;
+  --ok: #1e7a46;
+  --ok-soft: #e5f4ea;
+  --bad: #b3261e;
+  --bad-soft: #fbe9e7;
+  --warn: #8a5a00;
+  --warn-soft: #fff4dc;
+  --radius: 10px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12161c; --surface: #1a2029; --surface-2: #222a35; --text: #e6eaf0; --muted: #a3adbb;
+    --border: #334050; --accent: #7fb6dd; --accent-soft: #1d3142; --ok: #6fcf97; --ok-soft: #173325;
+    --bad: #f28b82; --bad-soft: #3a1d1b; --warn: #f2c063; --warn-soft: #3a2e14;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 920px; margin: 0 auto; padding: 0 16px 48px; }
+header.top { padding: 28px 0 12px; }
+header.top h1 { font-size: 1.55rem; line-height: 1.25; margin: 0 0 6px; letter-spacing: -0.01em; }
+header.top p { margin: 0; color: var(--muted); }
+.disclaimer { margin: 16px 0 20px; padding: 12px 14px; border: 1px solid var(--warn); background: var(--warn-soft); color: var(--text); border-radius: var(--radius); font-weight: 600; display: flex; gap: 10px; align-items: flex-start; }
+.disclaimer span.ic { color: var(--warn); font-size: 1.1rem; line-height: 1.3; }
+
+nav.main-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+nav.main-tabs { border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+nav.main-tabs button { background: none; border: none; border-bottom: 3px solid transparent; padding: 10px 12px; font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; }
+nav.main-tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+.card h2 { font-size: 1.15rem; margin: 0 0 4px; }
+.card h3 { font-size: 1rem; margin: 18px 0 8px; }
+.card .lead { color: var(--muted); margin: 0 0 14px; font-size: .95rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+label.f { display: block; font-weight: 600; font-size: .92rem; margin-bottom: 4px; }
+.hint { color: var(--muted); font-size: .82rem; font-weight: 400; }
+.date-field { display: flex; gap: 6px; }
+input[type="text"], input[type="number"], select { font: inherit; width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+input[type="text"].date-tr { font-family: var(--mono); letter-spacing: .02em; }
+input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+input.invalid { border-color: var(--bad); background: var(--bad-soft); }
+.ga-field { display: flex; align-items: center; gap: 6px; }
+.ga-field input { width: 5.2em; text-align: center; }
+.ga-field span { color: var(--muted); font-size: .9rem; }
+.icon-btn { flex: none; width: 42px; border: 1px solid var(--border); background: var(--surface-2); border-radius: 8px; cursor: pointer; font-size: 1rem; color: var(--text); position: relative; }
+.icon-btn input[type="date"] { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: 0; padding: 0; }
+.small-btn { font: inherit; font-size: .8rem; border: none; background: none; color: var(--accent); cursor: pointer; padding: 2px 0; text-decoration: underline; }
+.check { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; font-size: .95rem; }
+.check input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
+.actions { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { font: inherit; font-weight: 600; padding: 9px 18px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+@media (prefers-color-scheme: dark) { .btn { color: #0d1620; } }
+.btn.secondary { background: var(--surface); color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: default; }
+
+.result { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
+.result:empty { display: none; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.kpi { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+.kpi .k { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.kpi .v { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.kpi .s { font-size: .85rem; color: var(--muted); }
+.kpi.main { background: var(--accent-soft); border: 1px solid var(--accent); }
+.note { padding: 10px 12px; border-radius: 8px; margin: 10px 0; font-size: .93rem; border-left: 4px solid var(--accent); background: var(--accent-soft); }
+.note.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+.note.bad { border-left-color: var(--bad); background: var(--bad-soft); }
+.note.ok { border-left-color: var(--ok); background: var(--ok-soft); }
+.decision { font-size: 1.1rem; font-weight: 700; }
+.err { color: var(--bad); font-weight: 600; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: .82rem; text-transform: uppercase; letter-spacing: .03em; }
+.table-wrap { overflow-x: auto; }
+details { margin-top: 10px; }
+summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: .93rem; }
+ol.steps { padding-left: 1.3em; margin: 8px 0; }
+ol.steps li { margin-bottom: 6px; }
+ul.walk { font-family: var(--mono); font-size: .82rem; padding-left: 1.2em; margin: 6px 0; color: var(--muted); }
+code, .mono { font-family: var(--mono); font-size: .92em; }
+
+.score-bar { position: sticky; top: 0; z-index: 5; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.progress { flex: 1; min-width: 140px; height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.progress > div { height: 100%; background: var(--accent); width: 0; transition: width .25s; }
+.q-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.badge { font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+.badge.ok { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
+.badge.bad { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); }
+.q-text { margin: 4px 0 12px; }
+.answer-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.answer-row .date-field { max-width: 260px; }
+
+footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: .88rem; }
+footer p { margin: 6px 0; }
+.hidden { display: none !important; }
+@media (max-width: 520px) {
+  header.top h1 { font-size: 1.3rem; }
+  .card { padding: 14px; }
+  .kpi .v { font-size: 1.2rem; }
+}
+@media print {
+  nav, .actions, .score-bar, .icon-btn { display: none !important; }
+  body { background: #fff; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Gebelik Haftası ve Tahmini Doğum Tarihi Hesaplayıcı</h1>
+    <p>Ebelik öğrencileri için eğitim aracı · ACOG Committee Opinion No. 700 temel alınmıştır</p>
+  </header>
+
+  <div class="disclaimer" role="note"><span class="ic" aria-hidden="true">⚠</span><span>Eğitim amaçlıdır, klinik karar için kullanılmaz. Gerçek hastalarda gebelik haftası ve doğum tarihi kararı hekim/ebe değerlendirmesi ile verilmelidir.</span></div>
+
+  <nav class="main-tabs" role="tablist" aria-label="Bölümler">
+    <button role="tab" aria-selected="true" data-main="calc">Hesaplayıcı</button>
+    <button role="tab" aria-selected="false" data-main="practice">Alıştırma Modu</button>
+  </nav>
+
+  <!-- ===================== BÖLÜM 1: HESAPLAYICI ===================== -->
+  <section id="main-calc">
+    <!-- a) SAT -->
+    <div class="card" id="sub-lmp">
+      <h2>Son adet tarihine göre</h2>
+      <p class="lead">TDT = SAT + 280 gün (40 hafta). Gebelik haftası SAT'ın ilk gününden itibaren sayılır.</p>
+      <div class="grid">
+        <div>
+          <label class="f" for="lmp-sat">Son adet tarihi (ilk gün)</label>
+          <div class="date-field" data-date="lmp-sat"></div>
+        </div>
+        <div>
+          <label class="f" for="lmp-ref">Değerlendirme tarihi <span class="hint">(varsayılan: bugün)</span></label>
+          <div class="date-field" data-date="lmp-ref" data-today="1"></div>
+        </div>
+      </div>
+      <div class="actions"><button class="btn" id="lmp-go">Hesapla</button></div>
+      <div class="result" id="lmp-out" aria-live="polite"></div>
+    </div>
+
+  </section>
+
+  <!-- ===================== BÖLÜM 2: ALIŞTIRMA ===================== -->
+  <section id="main-practice" class="hidden">
+    <div class="card">
+      <h2>Alıştırma modu</h2>
+      <p class="lead">10 vaka, hepsi son adet tarihine (SAT) dayalı: Naegele ile TDT (3), gebelik haftası (3), yıl geçişi (1), artık yıl / Şubat sonu (1), Naegele ile 280 gün yöntemi arasındaki fark (1) ve trimester belirleme (1). Cevabınızı girip <strong>Kontrol et</strong>'e basın; her vaka için adım adım çözüm gösterilir. Her vakada ilk kontrol puanlanır. İlerleme yalnızca bu sayfada tutulur; sayfa yenilenince sıfırlanır, hiçbir yere kaydedilmez.</p>
+    </div>
+    <div class="score-bar">
+      <strong id="score-text">Puan: 0 / 10</strong>
+      <div class="progress" aria-hidden="true"><div id="score-progress"></div></div>
+      <span id="score-answered" class="hint">Cevaplanan: 0 / 10</span>
+      <button class="btn secondary" id="practice-reset">Sıfırla</button>
+    </div>
+    <div id="practice-list"></div>
+    <div id="practice-final" class="card hidden" aria-live="polite"></div>
+  </section>
+
+  <footer>
+    <p><strong>Kaynak:</strong> American College of Obstetricians and Gynecologists, American Institute of Ultrasound in Medicine, Society for Maternal-Fetal Medicine. <em>Methods for Estimating the Due Date.</em> ACOG Committee Opinion No. 700. Obstet Gynecol. 2017;129(5):e150–e154. (2022'de yeniden onaylanmıştır.)</p>
+    <p>Bu araç eğitim amaçlıdır, klinik karar için kullanılmaz. Girilen hiçbir veri toplanmaz, saklanmaz veya bir sunucuya gönderilmez; tüm hesaplamalar tarayıcınızda yapılır.</p>
+    <p>Geliştiren: Nur Üredi · Ege Üniversitesi Ebelik Doktora Programı · MIT Lisansı</p>
+  </footer>
+</div>
+
+<!--
+  ÇEKİRDEK HESAP MODÜLÜ (gh-core)
+  tests.js bu bloğu doğrudan index.html'den okuyup test eder.
+  Tüm tarihler "gün numarası" (1970-01-01'den itibaren UTC gün sayısı, tamsayı) olarak tutulur;
+  saat bilgisi hiç kullanılmadığı için saat dilimi / yaz saati kaynaklı kayma olmaz.
+-->
+<script id="gh-core">
+(function (root) {
+  'use strict';
+  var MS_PER_DAY = 86400000;
+  var MONTHS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  var WEEKDAYS = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+
+  var TERM_DAYS = 280;            // SAT + 280 gün
+
+  function isInt(x) { return typeof x === 'number' && isFinite(x) && Math.floor(x) === x; }
+
+  function isLeapYear(y) { return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+
+  function daysInMonth(y, m) {
+    return [31, isLeapYear(y) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
+  }
+
+  /** Yıl/ay/gün -> gün numarası. Geçersiz tarihte (ör. 29.02.2023) null döner. */
+  function fromYMD(y, m, d) {
+    if (!isInt(y) || !isInt(m) || !isInt(d)) return null;
+    if (y < 1900 || y > 2200 || m < 1 || m > 12 || d < 1 || d > daysInMonth(y, m)) return null;
+    return Math.round(Date.UTC(y, m - 1, d) / MS_PER_DAY);
+  }
+
+  /** Gün numarası -> {y, m, d} (UTC alanları kullanılır). */
+  function toYMD(n) {
+    var dt = new Date(n * MS_PER_DAY);
+    return { y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1, d: dt.getUTCDate() };
+  }
+
+  function pad2(x) { return (x < 10 ? '0' : '') + x; }
+
+  /** GG.AA.YYYY */
+  function formatDate(n) {
+    if (n === null || n === undefined) return '';
+    var t = toYMD(n);
+    return pad2(t.d) + '.' + pad2(t.m) + '.' + t.y;
+  }
+
+  function formatISO(n) {
+    var t = toYMD(n);
+    return t.y + '-' + pad2(t.m) + '-' + pad2(t.d);
+  }
+
+  function formatLong(n) {
+    var t = toYMD(n);
+    return t.d + ' ' + MONTHS[t.m - 1] + ' ' + t.y;
+  }
+
+  function weekdayName(n) { return WEEKDAYS[new Date(n * MS_PER_DAY).getUTCDay()]; }
+
+  /** "GG.AA.YYYY" (ayrıca "G.A.YYYY", "/" ve "-" ayraçları) veya ISO "YYYY-AA-GG" kabul eder. */
+  function parseDate(s) {
+    if (typeof s !== 'string') return null;
+    s = s.trim();
+    var m = /^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/.exec(s);
+    if (m) return fromYMD(+m[3], +m[2], +m[1]);
+    m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (m) return fromYMD(+m[1], +m[2], +m[3]);
+    return null;
+  }
+
+  /** Bilgisayarın yerel takvimindeki "bugün" (saat yok sayılır). */
+  function today() {
+    var d = new Date();
+    return fromYMD(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  }
+
+  function addDays(n, k) { return n + k; }
+  function diffDays(a, b) { return b - a; }
+
+  /** Ay ekleme/çıkarma; hedef ayda o gün yoksa ayın son gününe sabitlenir (ör. 31 → 28/29/30). */
+  function addMonths(n, k) {
+    var t = toYMD(n);
+    var total = t.y * 12 + (t.m - 1) + k;
+    var y = Math.floor(total / 12), m = (total % 12) + 1;
+    var dim = daysInMonth(y, m);
+    var clamped = t.d > dim;
+    return { date: fromYMD(y, m, clamped ? dim : t.d), clamped: clamped };
+  }
+
+  /* ---------- Gebelik haftası ---------- */
+  function splitGA(days) { return { w: Math.floor(days / 7), d: days - Math.floor(days / 7) * 7 }; }
+  function gaDays(w, d) {
+    if (!isInt(w) || !isInt(d) || w < 0 || d < 0 || d > 6) return null;
+    return w * 7 + d;
+  }
+  function formatGA(days) { var g = splitGA(days); return g.w + '+' + g.d; }
+  /** "24+3", "24 + 3", "24w3d" gibi girdileri gün sayısına çevirir. */
+  function parseGA(s) {
+    if (typeof s !== 'string') return null;
+    var m = /^\s*(\d{1,2})\s*(?:\+|w|h|hf)\s*(\d)\s*(?:d|g)?\s*$/i.exec(s);
+    if (!m) return null;
+    return gaDays(+m[1], +m[2]);
+  }
+  /** Trimester: 1. = 0+0–13+6, 2. = 14+0–27+6, 3. = 28+0 ve sonrası. */
+  function trimester(days) {
+    if (days < 0) return null;
+    if (days <= 13 * 7 + 6) return 1;
+    if (days <= 27 * 7 + 6) return 2;
+    return 3;
+  }
+
+  /* ---------- a) SAT ---------- */
+  function eddFromLMP(lmp) { return addDays(lmp, TERM_DAYS); }
+  function gaFromLMP(lmp, ref) { return diffDays(lmp, ref); }
+
+  /** Naegele: SAT + 7 gün, −3 ay, +1 yıl  (net: +7 gün, +9 ay). */
+  function naegele(lmp) {
+    var plus7 = addDays(lmp, 7);
+    var minus3 = addMonths(plus7, -3);          // yalnızca adımları göstermek için
+    var result = addMonths(plus7, 9);           // −3 ay +1 yıl = +9 ay (tek adımda; 29 Şubat kaybı olmaz)
+    var edd280 = eddFromLMP(lmp);
+    return {
+      plus7: plus7,
+      minus3: minus3.date,
+      minus3Clamped: minus3.clamped,
+      edd: result.date,
+      clamped: result.clamped,
+      edd280: edd280,
+      diff: diffDays(edd280, result.date),       // Naegele − 280 gün (gün)
+      totalDays: diffDays(lmp, result.date)
+    };
+  }
+
+  /* ---------- Takvim yürüyüşü (adım adım çözüm için) ---------- */
+  /** start → end arası günleri ay sonlarına göre parçalar. */
+  function walk(start, end) {
+    var steps = [], cur = start;
+    while (cur < end) {
+      var t = toYMD(cur), eom;
+      if (t.d === daysInMonth(t.y, t.m)) {
+        var ny = t.m === 12 ? t.y + 1 : t.y, nm = t.m === 12 ? 1 : t.m + 1;
+        eom = fromYMD(ny, nm, daysInMonth(ny, nm));
+      } else {
+        eom = fromYMD(t.y, t.m, daysInMonth(t.y, t.m));
+      }
+      var to = Math.min(eom, end);
+      steps.push({ to: to, add: to - cur, total: to - start, monthEnd: to === eom });
+      cur = to;
+    }
+    return steps;
+  }
+
+  /* ---------- Alıştırma vakaları ---------- */
+  var D = parseDate;
+  var PRACTICE = [
+    { id: 1, type: 'naegele', cat: 'Naegele ile TDT', lmp: D('10.03.2026'),
+      q: 'Son adet tarihi (SAT) <b>10.03.2026</b>. <b>Naegele kuralına</b> göre tahmini doğum tarihi (TDT) nedir?' },
+    { id: 2, type: 'naegele', cat: 'Naegele ile TDT', lmp: D('26.08.2026'),
+      q: 'SAT: <b>26.08.2026</b>. <b>Naegele kuralına</b> göre TDT nedir?' },
+    { id: 3, type: 'naegele', cat: 'Naegele ile TDT', lmp: D('20.11.2026'),
+      q: 'SAT: <b>20.11.2026</b>. <b>Naegele kuralına</b> göre TDT nedir?' },
+    { id: 4, type: 'sat-ga', cat: 'Gebelik haftası', lmp: D('15.01.2026'), ref: D('01.05.2026'),
+      q: 'SAT: <b>15.01.2026</b>. <b>01.05.2026</b> tarihindeki gebelik haftası nedir? (hafta+gün)' },
+    { id: 5, type: 'sat-ga', cat: 'Gebelik haftası', lmp: D('03.02.2026'), ref: D('10.08.2026'),
+      q: 'SAT: <b>03.02.2026</b>. <b>10.08.2026</b> tarihindeki gebelik haftası nedir? (hafta+gün)' },
+    { id: 6, type: 'sat-ga', cat: 'Gebelik haftası', lmp: D('12.04.2026'), ref: D('30.06.2026'),
+      q: 'SAT: <b>12.04.2026</b>. <b>30.06.2026</b> tarihindeki gebelik haftası nedir? (hafta+gün)' },
+    { id: 7, type: 'naegele', cat: 'Yıl geçişi', lmp: D('28.12.2025'),
+      q: 'SAT: <b>28.12.2025</b>. <b>Naegele kuralına</b> göre TDT nedir?' },
+    { id: 8, type: 'sat-edd', cat: 'Artık yıl / Şubat sonu', lmp: D('01.06.2027'),
+      q: 'SAT: <b>01.06.2027</b>. <b>SAT + 280 gün</b> kuralına göre TDT nedir?' },
+    { id: 9, type: 'naegele-diff', cat: 'Naegele ve 280 gün farkı', lmp: D('05.04.2026'),
+      q: 'SAT: <b>05.04.2026</b>. TDT\'yi hem <b>Naegele kuralıyla</b> hem <b>SAT + 280 gün</b> kuralıyla hesaplayın. İki sonuç arasında <b>kaç gün</b> fark vardır?' },
+    { id: 10, type: 'trimester', cat: 'Trimester', lmp: D('01.03.2026'), ref: D('28.06.2026'),
+      q: 'SAT: <b>01.03.2026</b>. <b>28.06.2026</b> tarihinde gebe <b>kaçıncı trimesterdedir</b>?' }
+  ];
+
+  /** Vakanın doğru cevabı: {kind:'date', value} veya {kind:'ga', value(gün)} */
+  function solvePractice(c) {
+    switch (c.type) {
+      case 'sat-edd': return { kind: 'date', value: eddFromLMP(c.lmp) };
+      case 'sat-ga': return { kind: 'ga', value: gaFromLMP(c.lmp, c.ref) };
+      case 'naegele': return { kind: 'date', value: naegele(c.lmp).edd };
+      case 'naegele-diff': return { kind: 'days', value: Math.abs(naegele(c.lmp).diff) };
+      case 'trimester': return { kind: 'trimester', value: trimester(gaFromLMP(c.lmp, c.ref)) };
+    }
+    return null;
+  }
+
+  root.GH = {
+    MONTHS: MONTHS, TERM_DAYS: TERM_DAYS, PRACTICE: PRACTICE,
+    isLeapYear: isLeapYear, daysInMonth: daysInMonth, fromYMD: fromYMD, toYMD: toYMD,
+    formatDate: formatDate, formatISO: formatISO, formatLong: formatLong, weekdayName: weekdayName,
+    parseDate: parseDate, today: today, addDays: addDays, diffDays: diffDays, addMonths: addMonths,
+    splitGA: splitGA, gaDays: gaDays, formatGA: formatGA, parseGA: parseGA, trimester: trimester,
+    eddFromLMP: eddFromLMP, gaFromLMP: gaFromLMP, naegele: naegele,
+    walk: walk, solvePractice: solvePractice
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+
+<!-- ARAYÜZ -->
+<script>
+(function () {
+  'use strict';
+  var GH = window.GH;
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function fd(n) { return GH.formatDate(n); }
+  function fdw(n) { return GH.formatDate(n) + ' <span class="hint">(' + GH.weekdayName(n) + ')</span>'; }
+  function gaText(days) { var g = GH.splitGA(days); return g.w + '+' + g.d; }
+  function gaLong(days) { var g = GH.splitGA(days); return g.w + ' hafta ' + g.d + ' gün'; }
+  function trimText(t) { return t === 1 ? '1. trimester' : t === 2 ? '2. trimester' : t === 3 ? '3. trimester' : '—'; }
+
+  /* ---------- Sekmeler ---------- */
+  document.querySelectorAll('[data-main]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('[data-main]').forEach(function (x) { x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
+      $('main-calc').classList.toggle('hidden', b.dataset.main !== 'calc');
+      $('main-practice').classList.toggle('hidden', b.dataset.main !== 'practice');
+    });
+  });
+  /* ---------- GG.AA.YYYY tarih alanları ---------- */
+  function buildDateField(holder) {
+    var id = holder.dataset.date;
+    holder.innerHTML =
+      '<input type="text" class="date-tr" id="' + id + '" placeholder="GG.AA.YYYY" inputmode="numeric" autocomplete="off" maxlength="10">' +
+      '<span class="icon-btn" title="Takvimden seç" aria-hidden="true">📅<input type="date" tabindex="-1" aria-hidden="true"></span>';
+    var txt = holder.querySelector('input[type="text"]');
+    var pick = holder.querySelector('input[type="date"]');
+    if (holder.dataset.today) txt.value = fd(GH.today());
+    txt.addEventListener('input', function (e) {
+      txt.classList.remove('invalid');
+      if (e.inputType && e.inputType.indexOf('delete') === 0) return;
+      var dg = txt.value.replace(/\D/g, '').slice(0, 8);
+      var out = dg.slice(0, 2);
+      if (dg.length > 2) out += '.' + dg.slice(2, 4);
+      if (dg.length > 4) out += '.' + dg.slice(4, 8);
+      if (dg.length === 2 || dg.length === 4) out += '.';
+      txt.value = out;
+    });
+    pick.addEventListener('change', function () {
+      var n = GH.parseDate(pick.value);
+      if (n !== null) { txt.value = fd(n); txt.classList.remove('invalid'); }
+    });
+    pick.addEventListener('focus', function () {
+      var n = GH.parseDate(txt.value);
+      if (n !== null) pick.value = GH.formatISO(n);
+    });
+    holder.parentNode.querySelector('label.f').setAttribute('for', id);
+  }
+  document.querySelectorAll('.date-field[data-date]').forEach(buildDateField);
+
+  function readDate(id, required) {
+    var el = $(id), n = GH.parseDate(el.value);
+    if (n === null && (required || el.value.trim() !== '')) el.classList.add('invalid'); else el.classList.remove('invalid');
+    return n;
+  }
+  function errBox(msg) { return '<p class="err">' + esc(msg) + '</p>'; }
+
+  function walkList(start, end) {
+    var steps = GH.walk(start, end);
+    var html = '<ul class="walk">';
+    steps.forEach(function (s) {
+      html += '<li>' + fd(s.to) + (s.monthEnd ? ' (ay sonu)' : '') + ' → +' + s.add + ' gün &nbsp;| toplam ' + s.total + '</li>';
+    });
+    return html + '</ul>';
+  }
+
+  /* ---------- a) SAT ---------- */
+  function runLMP() {
+    var out = $('lmp-out');
+    var lmp = readDate('lmp-sat', true), ref = readDate('lmp-ref', true);
+    if (lmp === null) { out.innerHTML = errBox('Lütfen geçerli bir son adet tarihi girin (GG.AA.YYYY).'); return; }
+    if (ref === null) { out.innerHTML = errBox('Lütfen geçerli bir değerlendirme tarihi girin (GG.AA.YYYY).'); return; }
+    var edd = GH.eddFromLMP(lmp), ga = GH.gaFromLMP(lmp, ref), n = GH.naegele(lmp);
+    var html = '<div class="kpis">';
+    html += '<div class="kpi main"><div class="k">TDT (SAT + 280 gün)</div><div class="v">' + fd(edd) + '</div><div class="s">' + GH.weekdayName(edd) + '</div></div>';
+    if (ga >= 0) {
+      html += '<div class="kpi"><div class="k">Gebelik haftası (' + fd(ref) + ')</div><div class="v">' + gaText(ga) + '</div><div class="s">' + gaLong(ga) + ' · ' + ga + ' gün · ' + trimText(GH.trimester(ga)) + '</div></div>';
+      var left = edd - ref;
+      html += '<div class="kpi"><div class="k">TDT\'ye kalan</div><div class="v">' + (left >= 0 ? left + ' gün' : '—') + '</div><div class="s">' + (left >= 0 ? gaLong(left) : 'TDT ' + (-left) + ' gün geçmiş') + '</div></div>';
+    }
+    html += '</div>';
+    if (ga >= 0) html += '<p class="hint">Bu araçta trimesterler ACOG tanımına göredir: 1. trimester 0+0–13+6, 2. trimester 14+0–27+6, 3. trimester 28+0 ve sonrası. Bazı ders kitaplarında sınırlar farklı olabilir.</p>';
+    if (ga < 0) html += '<div class="note bad">Değerlendirme tarihi son adet tarihinden önce. Gebelik haftası hesaplanamaz.</div>';
+    else if (ga > 42 * 7) html += '<div class="note warn">Hesaplanan gebelik haftası 42+0\'ı aşıyor. Tarihleri kontrol edin.</div>';
+    else if (ga < 14) html += '<div class="note warn">Gebelik haftası 2+0\'ın altında: SAT\'a göre sayımda ilk ~2 hafta henüz döllenme öncesi döneme karşılık gelir.</div>';
+
+    html += '<h3>Naegele kuralı ile karşılaştırma</h3><ol class="steps">';
+    html += '<li>SAT + 7 gün: ' + fd(lmp) + ' → <b>' + fd(n.plus7) + '</b></li>';
+    html += '<li>Ay − 3: ' + fd(n.plus7) + ' → <b>' + fd(n.minus3) + '</b>' + (n.minus3Clamped ? ' <span class="hint">(o ayda bu gün yok; ayın son gününe sabitlendi)</span>' : '') + '</li>';
+    html += '<li>Yıl + 1: ' + fd(n.minus3) + ' → <b>' + fd(n.edd) + '</b>' + (n.clamped ? ' <span class="hint">(hedef ayda bu gün yok; ayın son gününe sabitlendi)</span>' : '') + '</li></ol>';
+    html += '<div class="kpis"><div class="kpi"><div class="k">Naegele TDT</div><div class="v">' + fd(n.edd) + '</div><div class="s">SAT + ' + n.totalDays + ' gün</div></div>' +
+            '<div class="kpi"><div class="k">280 gün yöntemi</div><div class="v">' + fd(n.edd280) + '</div><div class="s">SAT + 280 gün</div></div>' +
+            '<div class="kpi"><div class="k">Fark</div><div class="v">' + Math.abs(n.diff) + ' gün</div><div class="s">' + (n.diff === 0 ? 'İki yöntem aynı sonucu verdi' : 'Naegele ' + (n.diff > 0 ? 'daha geç' : 'daha erken')) + '</div></div></div>';
+    html += '<div class="note"><strong>Neden fark çıkabilir?</strong> Naegele kuralı "9 ay + 7 gün" ekler; oysa ayların gün sayısı farklıdır (28, 29, 30 veya 31 gün). Bu nedenle 9 ay, aradaki aylara göre 273–276 gün eder ve Naegele sonucu SAT\'tan <b>280–283 gün</b> sonrasına düşebilir; 280 gün yöntemiyle genellikle 0–3 gün (çoğunlukla 1–2 gün) fark çıkar. Araya Şubat ayı girdiğinde fark en aza iner. ACOG, TDT için SAT + 280 gün yöntemini temel alır; bu araç da ana sonuç olarak 280 gün yöntemini kullanır.</div>';
+    html += '<details><summary>Adım adım: SAT + 280 gün takvim sayımı</summary>' + walkList(lmp, edd) + '</details>';
+    out.innerHTML = html;
+  }
+  $('lmp-go').addEventListener('click', runLMP);
+
+  /* ---------- BÖLÜM 2: Alıştırma ---------- */
+  var state = {}; // id -> {correct: bool}  (yalnızca bellekte)
+
+  function solutionSteps(c) {
+    var s = [];
+    if (c.type === 'sat-edd') {
+      var e = GH.eddFromLMP(c.lmp);
+      s.push('Kural: <b>TDT = SAT + 280 gün</b> (40 hafta).');
+      s.push('SAT ' + fd(c.lmp) + ' tarihinden itibaren ay sonlarına göre sayalım:' + walkList(c.lmp, e));
+      var spans = GH.toYMD(c.lmp).y !== GH.toYMD(e).y;
+      var leap = false;
+      GH.walk(c.lmp, e).forEach(function (st) { var t = GH.toYMD(st.to); if (t.m === 2 && t.d === 29) leap = true; });
+      if (leap) s.push('Dikkat: Aradaki Şubat <b>29 gün</b> (artık yıl). 28 gün varsaymak sonucu 1 gün kaydırır.');
+      else if (spans) s.push('Sayım yıl geçişi içeriyor; yılı 1 artırmayı unutmayın.');
+      s.push('Sonuç: <b>TDT = ' + fd(e) + '</b>');
+    } else if (c.type === 'sat-ga') {
+      var g = GH.gaFromLMP(c.lmp, c.ref), sp = GH.splitGA(g);
+      s.push('Gebelik haftası = SAT ile değerlendirme tarihi arasındaki gün sayısı ÷ 7.');
+      s.push(fd(c.lmp) + ' → ' + fd(c.ref) + ' arası gün sayısı:' + walkList(c.lmp, c.ref) + 'Toplam <b>' + g + ' gün</b>.');
+      s.push(g + ' ÷ 7 = <b>' + sp.w + '</b> hafta, kalan <b>' + sp.d + '</b> gün (' + sp.w + ' × 7 = ' + (sp.w * 7) + '; ' + g + ' − ' + (sp.w * 7) + ' = ' + sp.d + ').');
+      s.push('Sonuç: <b>' + sp.w + '+' + sp.d + '</b> hafta (' + trimText(GH.trimester(g)) + ').');
+    } else if (c.type === 'naegele') {
+      var n = GH.naegele(c.lmp);
+      s.push('Naegele kuralı: SAT <b>+ 7 gün</b>, <b>− 3 ay</b>, <b>+ 1 yıl</b>.');
+      s.push('SAT + 7 gün: ' + fd(c.lmp) + ' → <b>' + fd(n.plus7) + '</b>' + (GH.toYMD(c.lmp).m !== GH.toYMD(n.plus7).m ? ' (ay değişti!)' : ''));
+      s.push('Ay − 3: ' + fd(n.plus7) + ' → <b>' + fd(n.minus3) + '</b>' + (GH.toYMD(n.minus3).y !== GH.toYMD(n.plus7).y ? ' (bir önceki yıla geçildi)' : ''));
+      s.push('Yıl + 1: ' + fd(n.minus3) + ' → <b>' + fd(n.edd) + '</b>');
+      s.push('Karşılaştırma: 280 gün yöntemiyle TDT ' + fd(n.edd280) + '. Fark: <b>' + Math.abs(n.diff) + ' gün</b>' + (n.diff === 0 ? ' (bu vakada aynı).' : '. Nedeni: Naegele "9 ay + 7 gün" ekler, ayların gün sayısı farklı olduğu için bu süre her zaman 280 gün etmez (burada ' + n.totalDays + ' gün).'));
+      s.push('Sonuç (Naegele): <b>' + fd(n.edd) + '</b>');
+    } else if (c.type === 'naegele-diff') {
+      var nd = GH.naegele(c.lmp);
+      s.push('<b>Naegele:</b> SAT + 7 gün: ' + fd(c.lmp) + ' → ' + fd(nd.plus7) + '; Ay − 3: ' + fd(nd.plus7) + ' → ' + fd(nd.minus3) + '; Yıl + 1: ' + fd(nd.minus3) + ' → <b>' + fd(nd.edd) + '</b>.');
+      s.push('<b>280 gün:</b> ' + fd(c.lmp) + ' + 280 gün:' + walkList(c.lmp, nd.edd280) + '→ <b>' + fd(nd.edd280) + '</b>.');
+      s.push('Fark: ' + fd(nd.edd) + ' − ' + fd(nd.edd280) + ' = <b>' + Math.abs(nd.diff) + ' gün</b>' + (nd.diff > 0 ? ' (Naegele daha geç).' : nd.diff < 0 ? ' (Naegele daha erken).' : '.'));
+      s.push('Neden: Naegele "9 ay + 7 gün" ekler. Bu vakada ' + fd(nd.plus7) + ' ile ' + fd(nd.edd) + ' arasındaki 9 ay ' + (nd.totalDays - 7) + ' gün eder; toplam ' + nd.totalDays + ' gün. İki yöntemin aynı sonucu vermesi için 9 ayın tam 273 gün (280 − 7) olması gerekirdi; ayların gün sayısı farklı olduğu için (28–31 gün) bu çoğu zaman sağlanmaz.');
+      s.push('Sonuç: <b>' + Math.abs(nd.diff) + ' gün</b>');
+    } else if (c.type === 'trimester') {
+      var tg = GH.gaFromLMP(c.lmp, c.ref), tsp = GH.splitGA(tg), tri = GH.trimester(tg);
+      s.push('Önce gebelik haftasını bulun: ' + fd(c.lmp) + ' → ' + fd(c.ref) + ':' + walkList(c.lmp, c.ref) + 'Toplam <b>' + tg + ' gün</b> = ' + tsp.w + ' hafta ' + tsp.d + ' gün → <b>' + tsp.w + '+' + tsp.d + '</b>.');
+      s.push('Bu araçta trimesterler ACOG tanımına göredir: 1. trimester 0+0–13+6, 2. trimester 14+0–27+6, 3. trimester 28+0 ve sonrası. Bazı ders kitaplarında sınırlar farklı olabilir.');
+      s.push(tsp.w + '+' + tsp.d + ' hafta, 14+0 – 27+6 aralığında mı? ' + (tri === 2 ? '<b>Evet</b>.' : '<b>Hayır</b>.'));
+      if (tsp.d === 0 && (tsp.w === 14 || tsp.w === 28)) s.push('Dikkat: ' + tsp.w + '+0 tam sınırdadır ve <b>yeni trimesterin ilk günüdür</b>. "' + tsp.w + '. hafta" henüz tamamlanmamış gibi düşünüp bir önceki trimesteri seçmek sık yapılan bir hatadır.');
+      s.push('Sonuç: <b>' + trimText(tri) + '</b>');
+    }
+    return '<ol class="steps">' + s.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol>';
+  }
+
+  function buildPractice() {
+    var list = $('practice-list');
+    list.innerHTML = '';
+    GH.PRACTICE.forEach(function (c) {
+      var sol = GH.solvePractice(c);
+      var card = document.createElement('div');
+      card.className = 'card';
+      card.id = 'q-' + c.id;
+      var inputHtml = sol.kind === 'date'
+        ? '<div><label class="f" for="ans-' + c.id + '">Cevabınız (tarih)</label><div class="date-field" data-date="ans-' + c.id + '"></div></div>'
+        : sol.kind === 'days'
+        ? '<div><label class="f" for="ans-' + c.id + '-n">Cevabınız (gün)</label><div class="ga-field"><input type="number" id="ans-' + c.id + '-n" min="0" max="30" inputmode="numeric" placeholder="gün"><span>gün</span></div></div>'
+        : sol.kind === 'trimester'
+        ? '<div><label class="f" for="ans-' + c.id + '-t">Cevabınız (trimester)</label><select id="ans-' + c.id + '-t"><option value="">Seçin…</option><option value="1">1. trimester</option><option value="2">2. trimester</option><option value="3">3. trimester</option></select></div>'
+        : '<div><label class="f" for="ans-' + c.id + '-w">Cevabınız (hafta+gün)</label><div class="ga-field"><input type="number" id="ans-' + c.id + '-w" min="0" max="45" inputmode="numeric" placeholder="hafta" aria-label="hafta"><span>+</span><input type="number" id="ans-' + c.id + '-d" min="0" max="6" inputmode="numeric" placeholder="gün" aria-label="gün"></div></div>';
+      card.innerHTML =
+        '<div class="q-head"><strong>Vaka ' + c.id + '</strong><span class="badge">' + c.cat + '</span><span class="badge hidden" id="badge-' + c.id + '"></span></div>' +
+        '<p class="q-text">' + c.q + '</p>' +
+        '<div class="answer-row">' + inputHtml + '<button class="btn" id="chk-' + c.id + '">Kontrol et</button></div>' +
+        '<div class="result" id="fb-' + c.id + '" aria-live="polite"></div>';
+      list.appendChild(card);
+      card.querySelectorAll('.date-field[data-date]').forEach(buildDateField);
+      $('chk-' + c.id).addEventListener('click', function () { checkAnswer(c, sol); });
+    });
+    updateScore();
+  }
+
+  function checkAnswer(c, sol) {
+    var fb = $('fb-' + c.id), given = null, givenText;
+    if (sol.kind === 'date') {
+      given = readDate('ans-' + c.id, true);
+      if (given === null) { fb.innerHTML = errBox('Lütfen tarihi GG.AA.YYYY biçiminde girin.'); return; }
+      givenText = fd(given);
+    } else if (sol.kind === 'days') {
+      given = parseInt($('ans-' + c.id + '-n').value, 10);
+      if (isNaN(given) || given < 0) { fb.innerHTML = errBox('Lütfen gün sayısını girin.'); return; }
+      givenText = given + ' gün';
+    } else if (sol.kind === 'trimester') {
+      given = parseInt($('ans-' + c.id + '-t').value, 10);
+      if (isNaN(given)) { fb.innerHTML = errBox('Lütfen bir trimester seçin.'); return; }
+      givenText = trimText(given);
+    } else {
+      var w = parseInt($('ans-' + c.id + '-w').value, 10), d = parseInt($('ans-' + c.id + '-d').value, 10);
+      if (isNaN(d) && !isNaN(w)) d = 0;
+      given = GH.gaDays(w, d);
+      if (given === null) { fb.innerHTML = errBox('Lütfen hafta ve gün (0–6) girin.'); return; }
+      givenText = gaText(given);
+    }
+    var ok = given === sol.value;
+    var first = !(c.id in state);
+    if (first) state[c.id] = { correct: ok };
+    var badge = $('badge-' + c.id);
+    badge.classList.remove('hidden', 'ok', 'bad');
+    badge.classList.add(state[c.id].correct ? 'ok' : 'bad');
+    badge.textContent = state[c.id].correct ? 'Puan alındı' : 'Puan alınamadı';
+    var correctText = sol.kind === 'date' ? fd(sol.value) : sol.kind === 'days' ? sol.value + ' gün' : sol.kind === 'trimester' ? trimText(sol.value) : gaText(sol.value);
+    var msg = ok
+      ? '<div class="note ok"><strong>✓ Doğru!</strong> Cevabınız: ' + givenText + '</div>'
+      : '<div class="note bad"><strong>✗ Yanlış.</strong> Cevabınız: ' + givenText + ' · Doğru cevap: <b>' + correctText + '</b>' +
+        (sol.kind === 'date' ? ' (fark: ' + Math.abs(given - sol.value) + ' gün)' : '') + '</div>';
+    if (!first) msg += '<p class="hint">Bu vaka daha önce kontrol edildi; puan ilk denemeye göre verilir.</p>';
+    fb.innerHTML = msg + '<h3>Adım adım çözüm</h3>' + solutionSteps(c);
+    updateScore();
+  }
+
+  function updateScore() {
+    var total = GH.PRACTICE.length, answered = 0, correct = 0;
+    Object.keys(state).forEach(function (k) { answered++; if (state[k].correct) correct++; });
+    $('score-text').textContent = 'Puan: ' + correct + ' / ' + total;
+    $('score-answered').textContent = 'Cevaplanan: ' + answered + ' / ' + total;
+    $('score-progress').style.width = (answered / total * 100) + '%';
+    var fin = $('practice-final');
+    if (answered === total) {
+      var pct = Math.round(correct / total * 100);
+      var comment = pct === 100 ? 'Mükemmel! Tüm vakaları doğru çözdünüz.'
+        : pct >= 70 ? 'İyi iş. Yanlış yaptığınız vakaların adım adım çözümlerini gözden geçirin.'
+        : 'Çözümleri tekrar inceleyip "Sıfırla" ile yeniden deneyebilirsiniz. Özellikle ay sonları, artık yıl, yıl geçişi, Naegele adımları ve trimester sınırlarına (14+0, 28+0) dikkat edin.';
+      fin.innerHTML = '<h2>Toplam puan: ' + correct + ' / ' + total + ' (%' + pct + ')</h2><p>' + comment + '</p>';
+      fin.classList.remove('hidden');
+    } else {
+      fin.classList.add('hidden');
+    }
+  }
+
+  $('practice-reset').addEventListener('click', function () {
+    state = {};
+    buildPractice();
+    $('practice-final').classList.add('hidden');
+  });
+
+  buildPractice();
+})();
+</script>
+</body>
+</html>
